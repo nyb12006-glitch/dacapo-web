@@ -1166,9 +1166,8 @@
 
     video.pause();
     video.currentTime = 0;
-    let ready = false;
-    video.addEventListener('loadedmetadata', () => { ready = true; });
-    video.load();
+    let ready = video.readyState >= 1;
+    if (!ready) video.addEventListener('loadedmetadata', () => { ready = true; });
 
     let targetTime  = 0;   // tiempo objetivo según el scroll
     let displayTime = 0;   // tiempo actual interpolado
