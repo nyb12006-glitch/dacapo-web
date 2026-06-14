@@ -140,94 +140,94 @@ function drawLogo(ctx) {
   ctx.fill();
   ctx.restore();
 
-  // ── MÁQUINA DE TATUAR ─────────────────────────────────────────────
-  // Cabeza: upper-left → Mango: lower-right
-  const mSX = 180, mSY = 435;
-  const mEX = 552, mEY = 818;
-  const mA  = Math.atan2(mEY - mSY, mEX - mSX);
-
-  // Mango
-  ctx.beginPath();
-  ctx.moveTo(mSX + Math.cos(mA) * 42, mSY + Math.sin(mA) * 42);
-  ctx.lineTo(mEX, mEY);
-  ctx.strokeStyle = '#ececec';
-  ctx.lineWidth   = 26;
-  ctx.lineCap     = 'round';
-  ctx.stroke();
-
-  // Bloque de la cabeza
-  ctx.save();
-  ctx.translate(mSX, mSY);
-  ctx.rotate(mA);
-  ctx.fillStyle = '#ececec';
-  ctx.fillRect(0, -18, 50, 32);
-  ctx.restore();
-
-  // 4 púas (perpendiculares al mango)
-  ctx.save();
-  ctx.translate(mSX, mSY);
-  ctx.rotate(mA - Math.PI / 2);
-  for (let i = -1.5; i <= 1.5; i++) {
-    ctx.beginPath();
-    ctx.moveTo(i * 12, 0);
-    ctx.lineTo(i * 12, -45);
-    ctx.strokeStyle = '#ececec';
-    ctx.lineWidth   = 10;
-    ctx.lineCap     = 'square';
-    ctx.stroke();
-  }
-  ctx.restore();
-
-  // Bolita en el extremo del mango
-  ctx.beginPath();
-  ctx.arc(mEX, mEY, 12, 0, Math.PI * 2);
-  ctx.fillStyle = '#ececec'; ctx.fill();
-  ctx.beginPath();
-  ctx.arc(mEX, mEY, 6,  0, Math.PI * 2);
-  ctx.fillStyle = '#0c0c0c'; ctx.fill();
-
-  // ── AGUJA DE PIERCING ─────────────────────────────────────────────
-  // Punta: upper-right → Gancho: lower-left
-  const nSX = 562, nSY = 435;
-  const nEX = 165, nEY = 818;
+  // ── AGUJA (dibujada PRIMERO → queda por DETRÁS en el cruce) ──────
+  // Punta lanceta en upper-RIGHT → gancho en lower-LEFT
+  const nSX = 530, nSY = 510;
+  const nEX = 208, nEY = 800;
   const nA  = Math.atan2(nEY - nSY, nEX - nSX);
+  const nPA = -Math.sin(nA), nPB = Math.cos(nA); // perpendicular al eje
+  const nTA = nA + Math.PI;                        // dirección de la punta
 
   // Cuerpo fino
   ctx.beginPath();
   ctx.moveTo(nSX, nSY);
   ctx.lineTo(nEX + 24, nEY - 24);
   ctx.strokeStyle = '#ececec';
-  ctx.lineWidth   = 11;
+  ctx.lineWidth   = 24;
   ctx.lineCap     = 'round';
   ctx.stroke();
 
-  // Punta afilada
+  // Punta lanceta: rombo alargado apuntado en ambos extremos
+  // Frente 50 px, widest a 30 px desde nSX, back 8 px en dirección del cuerpo
+  const ftX = nSX + Math.cos(nTA) * 50, ftY = nSY + Math.sin(nTA) * 50;
+  const wX  = nSX + Math.cos(nTA) * 30, wY  = nSY + Math.sin(nTA) * 30;
+  const btX = nSX + Math.cos(nA)  *  8, btY = nSY + Math.sin(nA)  *  8;
+  const tw  = 9;
   ctx.beginPath();
-  ctx.moveTo(nSX, nSY);
-  ctx.lineTo(nSX + 20, nSY - 28);
-  ctx.lineWidth = 7;
-  ctx.lineCap   = 'round';
-  ctx.stroke();
+  ctx.moveTo(ftX, ftY);
+  ctx.lineTo(wX + nPA * tw, wY + nPB * tw);
+  ctx.lineTo(btX, btY);
+  ctx.lineTo(wX - nPA * tw, wY - nPB * tw);
+  ctx.closePath();
+  ctx.fillStyle = '#ececec';
+  ctx.fill();
 
-  // Gancho
+  // Gancho grande en lower-LEFT (casi C completa, apertura mirando arriba)
   ctx.save();
-  ctx.translate(nEX + 20, nEY - 18);
-  ctx.rotate(nA - 0.15);
+  ctx.translate(nEX + 18, nEY - 18);
+  ctx.rotate(nA - 0.2);
   ctx.beginPath();
-  ctx.arc(22, 6, 21, Math.PI * 0.82, Math.PI * 0.08, true);
+  ctx.arc(20, 4, 22, Math.PI * 0.88, Math.PI * 0.04, true);
   ctx.strokeStyle = '#ececec';
-  ctx.lineWidth   = 10;
+  ctx.lineWidth   = 9;
   ctx.lineCap     = 'round';
   ctx.stroke();
   ctx.restore();
 
-  // Anillo en la punta
+  // ── MÁQUINA (dibujada SEGUNDA → pasa por DELANTE en el cruce) ────
+  // Cabezal con púas en upper-LEFT → mango en lower-RIGHT
+  const mSX = 210, mSY = 510;
+  const mEX = 528, mEY = 800;
+  const mA  = Math.atan2(mEY - mSY, mEX - mSX);
+
+  // Mango grueso
   ctx.beginPath();
-  ctx.arc(nSX, nSY, 9, 0, Math.PI * 2);
-  ctx.fillStyle = '#0c0c0c'; ctx.fill();
+  ctx.moveTo(mSX + Math.cos(mA) * 46, mSY + Math.sin(mA) * 46);
+  ctx.lineTo(mEX, mEY);
+  ctx.strokeStyle = '#ececec';
+  ctx.lineWidth   = 9;
+  ctx.lineCap     = 'round';
+  ctx.stroke();
+
+  // Bloque del cabezal (sólido, más grande)
+  ctx.save();
+  ctx.translate(mSX, mSY);
+  ctx.rotate(mA);
+  ctx.fillStyle = '#ececec';
+  ctx.fillRect(0, -18, 48, 36);
+  ctx.restore();
+
+  // 5 púas, más anchas y separadas, extremos planos/cuadrados
+  ctx.save();
+  ctx.translate(mSX, mSY);
+  ctx.rotate(mA - Math.PI / 2);
+  for (let i = -2; i <= 2; i++) {
+    ctx.beginPath();
+    ctx.moveTo(i * 10, 0);
+    ctx.lineTo(i * 10, -44);
+    ctx.strokeStyle = '#ececec';
+    ctx.lineWidth   = 9;
+    ctx.lineCap     = 'square';
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // Aro vacío al final del mango (solo contorno, sin relleno)
   ctx.beginPath();
-  ctx.arc(nSX, nSY, 9, 0, Math.PI * 2);
-  ctx.strokeStyle = '#ececec'; ctx.lineWidth = 4.5; ctx.stroke();
+  ctx.arc(mEX, mEY, 11, 0, Math.PI * 2);
+  ctx.strokeStyle = '#ececec';
+  ctx.lineWidth   = 4;
+  ctx.stroke();
 }
 
 // ── Texturas ─────────────────────────────────────────────────────
