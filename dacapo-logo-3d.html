@@ -172,22 +172,17 @@ function drawLogo(ctx) {
   ctx.fillStyle = '#ececec';
   ctx.fill();
 
-  // Gancho grande en lower-LEFT (casi C completa, apertura mirando arriba)
-  ctx.save();
-  ctx.translate(nEX + 18, nEY - 18);
-  ctx.rotate(nA - 0.2);
+  // Aro vacío en lower-LEFT (solo contorno)
   ctx.beginPath();
-  ctx.arc(20, 4, 22, Math.PI * 0.88, Math.PI * 0.04, true);
+  ctx.arc(nEX + 10, nEY - 10, 11, 0, Math.PI * 2);
   ctx.strokeStyle = '#ececec';
-  ctx.lineWidth   = 9;
-  ctx.lineCap     = 'round';
+  ctx.lineWidth   = 4;
   ctx.stroke();
-  ctx.restore();
 
   // ── MÁQUINA (dibujada SEGUNDA → pasa por DELANTE en el cruce) ────
   // Cabezal con púas en upper-LEFT → mango en lower-RIGHT
   const mSX = 210, mSY = 510;
-  const mEX = 528, mEY = 800;
+  const mEX = 506, mEY = 780;
   const mA  = Math.atan2(mEY - mSY, mEX - mSX);
 
   // Mango grueso
@@ -222,12 +217,17 @@ function drawLogo(ctx) {
   }
   ctx.restore();
 
-  // Aro vacío al final del mango (solo contorno, sin relleno)
+  // Gancho: misma forma que antes, centro ajustado para arrancar exactamente en el extremo del palo
+  ctx.save();
+  ctx.translate(mEX, mEY);
+  ctx.rotate(mA - 0.2);
   ctx.beginPath();
-  ctx.arc(mEX, mEY, 11, 0, Math.PI * 2);
+  ctx.arc(20, -8, 22, Math.PI * 0.88, Math.PI * 0.04, true);
   ctx.strokeStyle = '#ececec';
-  ctx.lineWidth   = 4;
+  ctx.lineWidth   = 9;
+  ctx.lineCap     = 'round';
   ctx.stroke();
+  ctx.restore();
 }
 
 // ── Texturas ─────────────────────────────────────────────────────
