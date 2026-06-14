@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dacapo Logo 3D</title>
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: transparent; }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ── Renderer ─────────────────────────────────────────────────────
+const canvas = document.getElementById('c');
+const W = document.documentElement.clientWidth  || 400;
+const H = document.documentElement.clientHeight || 400;
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setSize(W, H);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+
+const scene  = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(45, W / H, 0.1, 100);
+camera.position.set(0, 0, 5.5);
+
+scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+const dl = new THREE.DirectionalLight(0xffffff, 1.4);
+dl.position.set(3, 5, 5); scene.add(dl);
+const rl = new THREE.DirectionalLight(0xcc2222, 0.4);
+rl.position.set(-4, -2, -3); scene.add(rl);
+
+const group = new THREE.Group();
+scene.add(group);
+
+// ── Forma escudo (5 vértices) ─────────────────────────────────────
+//  Bounding box:  x ∈ [-1.1, 1.1]  (ancho 2.2)
+//                 y ∈ [-1.5,  1.5]  (alto  3.0)
+//  Ratio = 2.2 / 3.0 = 0.733
+//
+//  Punta arriba → hombros (63 %) → lados convergen en diagonal → barra plana
+//  Los bordes inferiores van siempre hacia DENTRO: la barra no puede ser
+//  más ancha que el punto de hombro.
+const kitShape = new THREE.Shape();
+kitShape.moveTo( 0,    1.5);    // punta superior
+kitShape.lineTo( 1.1, -0.5);    // hombro derecho  (63 % desde arriba)
+kitShape.lineTo( 0.58,-1.5);    // esquina inf-der (borde converge hasta aquí)
+kitShape.lineTo(-0.58,-1.5);    // barra plana inferior
+kitShape.lineTo(-1.1, -0.5);    // hombro izquierdo
+kitShape.closePath();
+
+// Canto metálico
+const rimGeo = new THREE.ExtrudeGeometry(kitShape, { depth: 0.14, bevelEnabled: false });
+rimGeo.translate(0, 0, -0.07);
+group.add(new THREE.Mesh(rimGeo, new THREE.MeshStandardMaterial({
+  color: 0x1a1a1a, metalness: 0.82, roughness: 0.12
+})));
+
+// ── Canvas textura ────────────────────────────────────────────────
+// Ratio 2.2/3.0 = 0.733 → canvas 733 × 1000
+// UV:  u = (x + 1.1) / 2.2        →  canvas_x = u × 733
+//      v = (y + 1.5) / 3.0        →  canvas_y = (1 − v) × 1000  [flipY]
+//
+// Vértices del escudo en canvas (KM = 25 px aplicado en extremos):
+//   top      (0,    1.5)  → u=0.500 v=1.000 → canvas(366,  0) → (366,  25)
+//   R hombro (1.1, −0.5)  → u=1.000 v=0.333 → canvas(733,667) → (708, 667)
+//   R esquina(0.58,−1.5)  → u=0.764 v=0.000 → canvas(560,1000) → (560, 975)
+//   L esquina(−0.58,−1.5) → u=0.236 v=0.000 → canvas(173,1000) → (173, 975)
+//   L hombro (−1.1, −0.5) → u=0.000 v=0.333 → canvas(  0,667) → ( 25, 667)
+
+const CW = 733, CH = 1000;
+const cx = 366, cy = 500;   // centro del bounding-box en canvas
+
+const VERTS = [
+  [366,  25],   // top
+  [708, 667],   // R hombro
+  [560, 975],   // R esquina inferior
+  [173, 975],   // L esquina inferior
+  [ 25, 667],   // L hombro
+];
+
+function kitePath(ctx, s) {
+  ctx.beginPath();
+  VERTS.forEach(([vx, vy], i) => {
+    const x = cx + (vx - cx) * s;
+    const y = cy + (vy - cy) * s;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.closePath();
+}
+
+function drawLogo(ctx) {
+  ctx.fillStyle = '#0c0c0c';
+  ctx.fillRect(0, 0, CW, CH);
+
+  ctx.lineJoin = 'miter';
+  ctx.miterLimit = 8;
+
+  // ── Borde triple ─────────────────────────────────────────────────
+  kitePath(ctx, 1.00);
+  ctx.strokeStyle = '#ececec'; ctx.lineWidth = 20; ctx.stroke();
+
+  kitePath(ctx, 0.924);
+  ctx.strokeStyle = '#ececec'; ctx.lineWidth = 6.5; ctx.stroke();
+
+  kitePath(ctx, 0.880);
+  ctx.strokeStyle = 'rgba(236,236,236,0.50)'; ctx.lineWidth = 3; ctx.stroke();
+
+  ctx.lineCap  = 'round';
+  ctx.lineJoin = 'round';
+
+  // ── GOTA DE TINTA ─────────────────────────────────────────────────
+  // Centro en la zona estrecha superior; radio = 45 → cabe holgadamente
+  const dX = cx, dY = 230, dR = 45;
+
+  ctx.beginPath();
+  ctx.moveTo(dX, dY - dR * 1.15);           // punta superior
+  ctx.bezierCurveTo(
+    dX + dR * 0.45, dY - dR * 0.55,
+    dX + dR,        dY,
+    dX + dR,        dY + dR * 0.3
+  );
+  ctx.arc(dX, dY + dR * 0.3, dR, 0, Math.PI);
+  ctx.bezierCurveTo(
+    dX - dR,        dY,
+    dX - dR * 0.45, dY - dR * 0.55,
+    dX, dY - dR * 1.15
+  );
+  ctx.closePath();
+  ctx.fillStyle = '#ececec';
+  ctx.fill();
+
+  // Reflejo curvo en la gota
+  ctx.save();
+  ctx.clip();
+  ctx.beginPath();
+  ctx.ellipse(dX + dR * 0.18, dY + dR * 0.55, dR * 0.12, dR * 0.22, 0.5, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(10,10,10,0.55)';
+  ctx.fill();
+  ctx.restore();
+
+  // ── MÁQUINA DE TATUAR ─────────────────────────────────────────────
+  // Cabeza: upper-left → Mango: lower-right
+  const mSX = 180, mSY = 435;
+  const mEX = 552, mEY = 818;
+  const mA  = Math.atan2(mEY - mSY, mEX - mSX);
+
+  // Mango
+  ctx.beginPath();
+  ctx.moveTo(mSX + Math.cos(mA) * 42, mSY + Math.sin(mA) * 42);
+  ctx.lineTo(mEX, mEY);
+  ctx.strokeStyle = '#ececec';
+  ctx.lineWidth   = 26;
+  ctx.lineCap     = 'round';
+  ctx.stroke();
+
+  // Bloque de la cabeza
+  ctx.save();
+  ctx.translate(mSX, mSY);
+  ctx.rotate(mA);
+  ctx.fillStyle = '#ececec';
+  ctx.fillRect(0, -18, 50, 32);
+  ctx.restore();
+
+  // 4 púas (perpendiculares al mango)
+  ctx.save();
+  ctx.translate(mSX, mSY);
+  ctx.rotate(mA - Math.PI / 2);
+  for (let i = -1.5; i <= 1.5; i++) {
+    ctx.beginPath();
+    ctx.moveTo(i * 12, 0);
+    ctx.lineTo(i * 12, -45);
+    ctx.strokeStyle = '#ececec';
+    ctx.lineWidth   = 10;
+    ctx.lineCap     = 'square';
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // Bolita en el extremo del mango
+  ctx.beginPath();
+  ctx.arc(mEX, mEY, 12, 0, Math.PI * 2);
+  ctx.fillStyle = '#ececec'; ctx.fill();
+  ctx.beginPath();
+  ctx.arc(mEX, mEY, 6,  0, Math.PI * 2);
+  ctx.fillStyle = '#0c0c0c'; ctx.fill();
+
+  // ── AGUJA DE PIERCING ─────────────────────────────────────────────
+  // Punta: upper-right → Gancho: lower-left
+  const nSX = 562, nSY = 435;
+  const nEX = 165, nEY = 818;
+  const nA  = Math.atan2(nEY - nSY, nEX - nSX);
+
+  // Cuerpo fino
+  ctx.beginPath();
+  ctx.moveTo(nSX, nSY);
+  ctx.lineTo(nEX + 24, nEY - 24);
+  ctx.strokeStyle = '#ececec';
+  ctx.lineWidth   = 11;
+  ctx.lineCap     = 'round';
+  ctx.stroke();
+
+  // Punta afilada
+  ctx.beginPath();
+  ctx.moveTo(nSX, nSY);
+  ctx.lineTo(nSX + 20, nSY - 28);
+  ctx.lineWidth = 7;
+  ctx.lineCap   = 'round';
+  ctx.stroke();
+
+  // Gancho
+  ctx.save();
+  ctx.translate(nEX + 20, nEY - 18);
+  ctx.rotate(nA - 0.15);
+  ctx.beginPath();
+  ctx.arc(22, 6, 21, Math.PI * 0.82, Math.PI * 0.08, true);
+  ctx.strokeStyle = '#ececec';
+  ctx.lineWidth   = 10;
+  ctx.lineCap     = 'round';
+  ctx.stroke();
+  ctx.restore();
+
+  // Anillo en la punta
+  ctx.beginPath();
+  ctx.arc(nSX, nSY, 9, 0, Math.PI * 2);
+  ctx.fillStyle = '#0c0c0c'; ctx.fill();
+  ctx.beginPath();
+  ctx.arc(nSX, nSY, 9, 0, Math.PI * 2);
+  ctx.strokeStyle = '#ececec'; ctx.lineWidth = 4.5; ctx.stroke();
+}
+
+// ── Texturas ─────────────────────────────────────────────────────
+const tcF = document.createElement('canvas');
+tcF.width = CW; tcF.height = CH;
+drawLogo(tcF.getContext('2d'));
+const texF = new THREE.CanvasTexture(tcF);
+
+const tcB = document.createElement('canvas');
+tcB.width = CW; tcB.height = CH;
+const ctxB = tcB.getContext('2d');
+ctxB.save(); ctxB.translate(CW, 0); ctxB.scale(-1, 1);
+drawLogo(ctxB); ctxB.restore();
+const texB = new THREE.CanvasTexture(tcB);
+
+// ── Caras con UV normalizado ──────────────────────────────────────
+// Three.js r128 ShapeGeometry usa x,y crudos como UV → normalizar al bounding box
+function buildFace(shape) {
+  const geo = new THREE.ShapeGeometry(shape, 32);
+  const uv  = geo.attributes.uv;
+  const pos = geo.attributes.position;
+  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+  for (let i = 0; i < pos.count; i++) {
+    x0 = Math.min(x0, pos.getX(i)); x1 = Math.max(x1, pos.getX(i));
+    y0 = Math.min(y0, pos.getY(i)); y1 = Math.max(y1, pos.getY(i));
+  }
+  const rX = 1 / (x1 - x0), rY = 1 / (y1 - y0);
+  for (let i = 0; i < uv.count; i++) {
+    uv.setXY(i, (pos.getX(i) - x0) * rX, (pos.getY(i) - y0) * rY);
+  }
+  uv.needsUpdate = true;
+  return geo;
+}
+
+const faceGeo = buildFace(kitShape);
+
+const front = new THREE.Mesh(faceGeo, new THREE.MeshStandardMaterial({
+  map: texF, metalness: 0.05, roughness: 0.62
+}));
+front.position.z = 0.073;
+group.add(front);
+
+const back = new THREE.Mesh(faceGeo, new THREE.MeshStandardMaterial({
+  map: texB, metalness: 0.05, roughness: 0.62, side: THREE.BackSide
+}));
+back.position.z = -0.073;
+group.add(back);
+
+// ── Animación ─────────────────────────────────────────────────────
+let t = 0;
+(function loop() {
+  requestAnimationFrame(loop);
+  t += 0.012;
+  group.rotation.y = t;
+  group.rotation.x = Math.sin(t * 0.3) * 0.07;
+  renderer.render(scene, camera);
+})();
+</script>
+</body>
+</html>
