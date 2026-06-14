@@ -1171,7 +1171,8 @@
 
     let targetTime  = 0;   // tiempo objetivo según el scroll
     let displayTime = 0;   // tiempo actual interpolado
-    const LERP = 0.07;     // suavidad: más bajo = más suave, más alto = más reactivo
+    const LERP_DOWN = 0.07;
+    const LERP_UP   = 0.25;
 
     function getTargetTime() {
       if (!video.duration) return 0;
@@ -1187,8 +1188,9 @@
       requestAnimationFrame(loop);
       if (!ready || !video.duration) return;
 
-      targetTime  = getTargetTime();
-      displayTime = displayTime + (targetTime - displayTime) * LERP;
+      targetTime = getTargetTime();
+      const lerp  = targetTime < displayTime ? LERP_UP : LERP_DOWN;
+      displayTime = displayTime + (targetTime - displayTime) * lerp;
 
       // solo buscamos si la diferencia es perceptible (evita seeks innecesarios)
       if (Math.abs(video.currentTime - displayTime) > 0.005) {
