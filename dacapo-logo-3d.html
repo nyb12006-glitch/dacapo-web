@@ -112,20 +112,20 @@ function drawLogo(ctx) {
 
   // ── GOTA DE TINTA ─────────────────────────────────────────────────
   // Centro en la zona estrecha superior; radio = 45 → cabe holgadamente
-  const dX = cx, dY = 230, dR = 45;
+  const dX = cx, dY = 350, dR = 78;
 
   ctx.beginPath();
-  ctx.moveTo(dX, dY - dR * 1.15);           // punta superior
+  ctx.moveTo(dX, dY - dR * 2.0);
   ctx.bezierCurveTo(
-    dX + dR * 0.45, dY - dR * 0.55,
+    dX + dR * 0.32, dY - dR * 1.2,
     dX + dR,        dY,
     dX + dR,        dY + dR * 0.3
   );
   ctx.arc(dX, dY + dR * 0.3, dR, 0, Math.PI);
   ctx.bezierCurveTo(
     dX - dR,        dY,
-    dX - dR * 0.45, dY - dR * 0.55,
-    dX, dY - dR * 1.15
+    dX - dR * 0.32, dY - dR * 1.2,
+    dX, dY - dR * 2.0
   );
   ctx.closePath();
   ctx.fillStyle = '#ececec';
@@ -142,7 +142,7 @@ function drawLogo(ctx) {
 
   // ── AGUJA (dibujada PRIMERO → queda por DETRÁS en el cruce) ──────
   // Punta lanceta en upper-RIGHT → gancho en lower-LEFT
-  const nSX = 530, nSY = 510;
+  const nSX = 508, nSY = 510;
   const nEX = 208, nEY = 800;
   const nA  = Math.atan2(nEY - nSY, nEX - nSX);
   const nPA = -Math.sin(nA), nPB = Math.cos(nA); // perpendicular al eje
@@ -157,17 +157,23 @@ function drawLogo(ctx) {
   ctx.lineCap     = 'round';
   ctx.stroke();
 
-  // Punta lanceta: rombo alargado apuntado en ambos extremos
-  // Frente 50 px, widest a 30 px desde nSX, back 8 px en dirección del cuerpo
-  const ftX = nSX + Math.cos(nTA) * 50, ftY = nSY + Math.sin(nTA) * 50;
-  const wX  = nSX + Math.cos(nTA) * 30, wY  = nSY + Math.sin(nTA) * 30;
-  const btX = nSX + Math.cos(nA)  *  8, btY = nSY + Math.sin(nA)  *  8;
-  const tw  = 9;
+  // Punta lanceta: lomo bezier convexo + bisel líneas rectas (sin cruce posible)
+  const tipLen = 62, tw = 9, bevelW = 3;
+  const ftX = nSX + Math.cos(nTA) * tipLen,          ftY = nSY + Math.sin(nTA) * tipLen;
+  const bX  = nSX + Math.cos(nA)  * 6,              bY  = nSY + Math.sin(nA)  * 6;
+  const wX  = nSX + Math.cos(nTA) * (tipLen * 0.55), wY  = nSY + Math.sin(nTA) * (tipLen * 0.55);
   ctx.beginPath();
   ctx.moveTo(ftX, ftY);
-  ctx.lineTo(wX + nPA * tw, wY + nPB * tw);
-  ctx.lineTo(btX, btY);
-  ctx.lineTo(wX - nPA * tw, wY - nPB * tw);
+  // Lomo (spine): bezier convexo, siempre hacia afuera
+  ctx.bezierCurveTo(
+    wX - nPA * tw * 0.5, wY - nPB * tw * 0.5,
+    wX - nPA * tw,       wY - nPB * tw,
+    bX - nPA * (tw - 2), bY - nPB * (tw - 2)
+  );
+  // Base
+  ctx.lineTo(bX + nPA * bevelW, bY + nPB * bevelW);
+  // Bisel: líneas rectas → cara plana asimétrica, sin cruce posible
+  ctx.lineTo(wX + nPA * bevelW, wY + nPB * bevelW);
   ctx.closePath();
   ctx.fillStyle = '#ececec';
   ctx.fill();
